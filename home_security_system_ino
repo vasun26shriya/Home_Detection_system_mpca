@@ -1,0 +1,75 @@
+int trigPin = 6;
+int echoPin = 7;
+
+int gasPin = A0;
+int flamePin = 4;
+
+int buzzer = 8;
+int led = 9;
+
+int gasThreshold = 300;
+int distanceThreshold = 50; // cm
+
+long duration;
+int distance;
+
+void setup() {
+pinMode(trigPin, OUTPUT);
+pinMode(echoPin, INPUT);
+
+pinMode(flamePin, INPUT);
+pinMode(buzzer, OUTPUT);
+pinMode(led, OUTPUT);
+
+Serial.begin(9600);
+Serial.println("System Ready");
+}
+
+int getDistance() {
+digitalWrite(trigPin, LOW);
+delayMicroseconds(2);
+
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin, LOW);
+
+duration = pulseIn(echoPin, HIGH);
+distance = duration * 0.034 / 2;
+
+return distance;
+}
+
+void loop() {
+
+int dist = getDistance();
+int gasValue = analogRead(gasPin);
+
+// Flame detection (LOW = detected)
+bool flameDetected = false;
+if (digitalRead(flamePin) == LOW) {
+delay(20);
+if (digitalRead(flamePin) == LOW) {
+flameDetected = true;
+}
+}
+
+bool intrusionDetected = (dist > 0 && dist < distanceThreshold);
+bool gasDetected = (gasValue > gasThreshold);
+
+Serial.print("Distance=");
+Serial.print(dist);
+Serial.print(" Gas=");
+Serial.print(gasValue);
+Serial.print(" Flame=");
+Serial.println(flameDetected);
+
+if (intrusionDetected || gasDetected || flameDetected) {
+digitalWrite(led, LOW);
+digitalWrite(buzzer, LOW);
+} else {
+digitalWrite(led, HIGH);
+digitalWrite(buzzer, HIGH);
+}
+
+delay(300);
+}
